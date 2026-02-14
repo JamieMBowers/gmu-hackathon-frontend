@@ -1,4 +1,4 @@
-export const BASE_URL = 'https://gmu-hack-functions.azurewebsites.net';
+export const API_BASE_URL = 'https://gmu-hack-functions2.azurewebsites.net';
 
 // Types aligned with backend models (see backend/src/models/types.ts)
 
@@ -85,14 +85,22 @@ export type SearchResult = {
 
 export type SearchResponse = {
   results: SearchResult[];
+  suggested?: SearchResult[];
+  meta?: any;
   stats: {
     query: string;
     returned: number;
   };
 };
 
+// Suggestions resolve types
+export interface SuggestionsResolveResponse {
+  suggested: SearchResult[];
+  unresolved_lines: string[];
+}
+
 async function request<TResponse>(path: string, body: unknown): Promise<TResponse> {
-  const url = new URL(path, BASE_URL).toString();
+  const url = new URL(path, API_BASE_URL).toString();
 
   const response = await fetch(url, {
     method: 'POST',
@@ -104,8 +112,10 @@ async function request<TResponse>(path: string, body: unknown): Promise<TRespons
 
   if (!response.ok) {
     let message = 'Request failed.';
+    let body: unknown;
     try {
-      const data = (await response.json()) as { error?: string; message?: string };
+      body = (await response.json()) as { error?: string; message?: string };
+      const data = body as { error?: string; message?: string };
       if (data.error) {
         message = data.error;
       } else if (data.message) {
@@ -114,7 +124,10 @@ async function request<TResponse>(path: string, body: unknown): Promise<TRespons
     } catch {
       message = `Request failed with status ${response.status}`;
     }
-    throw new Error(message);
+    const error = new Error(message) as Error & { status?: number; body?: unknown };
+    error.status = response.status;
+    error.body = body;
+    throw error;
   }
 
   return (await response.json()) as TResponse;
@@ -140,6 +153,15 @@ export async function searchOpenAlex(params: {
   to_year?: number;
 }): Promise<SearchResponse> {
   return await request<SearchResponse>('/api/search/openalex', params);
+}
+
+export async function resolveSuggestions(body: {
+  items: string[];
+}): Promise<SuggestionsResolveResponse> {
+  return await request<SuggestionsResolveResponse>(
+    '/api/suggestions/resolve',
+    body,
+  );
 }
 
 export async function analyzeClaims(

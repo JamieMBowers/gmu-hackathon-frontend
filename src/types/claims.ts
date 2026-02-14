@@ -15,10 +15,18 @@ export interface EnrichedSource {
   apa_missing: string[];
 }
 
+export interface ProquestEvidenceItem {
+  title?: string;
+  doi?: string;
+  url: string;
+  abstract: string;
+}
+
 export interface ClaimAnalyzeRequest {
   thesis: string;
   claims: string[];
   sources: EnrichedSource[];
+  proquestEvidence?: ProquestEvidenceItem[];
 }
 
 export type ClaimStance = 'supports' | 'opposes' | 'mixed' | 'irrelevant';
@@ -29,6 +37,7 @@ export interface EvidenceHit {
   relevance: number;
   stance: ClaimStance;
   evidence_sentences: string[];
+  source_kind?: 'openalex' | 'proquest';
 }
 
 export interface ClaimResult {
