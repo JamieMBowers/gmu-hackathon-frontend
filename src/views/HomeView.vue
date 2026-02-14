@@ -31,14 +31,28 @@
         </v-alert>
       </v-col>
 
-      <v-col cols="12">
+      <v-col cols="12" class="mt-4">
+        <v-tabs
+          v-model="activeStep"
+          density="comfortable"
+          class="bg-transparent"
+          grow
+        >
+          <v-tab value="thesis">1. Thesis & claims</v-tab>
+          <v-tab value="search">2. Search</v-tab>
+          <v-tab value="workspace">3. Workspace</v-tab>
+          <v-tab value="analysis">4. Analysis</v-tab>
+        </v-tabs>
+      </v-col>
+
+      <v-col cols="12" class="mt-2" v-if="activeStep === 'thesis'">
         <ThesisInput
           v-model:thesis="thesis"
           v-model:claims="claimsInput"
         />
       </v-col>
 
-      <v-col cols="12" class="mt-4">
+      <v-col cols="12" class="mt-2" v-if="activeStep === 'search'">
         <v-card variant="outlined" class="bg-white mb-4">
           <v-card-title class="text-subtitle-1 font-weight-medium">
             Search OpenAlex
@@ -125,10 +139,11 @@
 
               <v-col cols="12" class="mt-2">
                 <v-checkbox
-                  v-model="includePatriotProquest"
+                  :model-value="includePatriotProquest"
                   label="Add PatriotAI ProQuest results (reading list)"
                   density="comfortable"
                   hide-details="auto"
+                  @update:model-value="onTogglePatriotProquest"
                 />
               </v-col>
 
@@ -312,7 +327,11 @@
         </v-card>
       </v-col>
 
-      <v-col cols="12" class="mt-6" v-if="enrichedSources && enrichedSources.length">
+      <v-col
+        cols="12"
+        class="mt-6"
+        v-if="activeStep === 'workspace' && enrichedSources && enrichedSources.length"
+      >
         <div class="d-flex justify-space-between align-center mb-2">
           <div>
             <div class="text-subtitle-1 font-weight-medium">
@@ -340,7 +359,7 @@
       <v-col
         cols="12"
         class="mt-6"
-        v-if="proquestLeads.length"
+        v-if="activeStep === 'workspace' && proquestLeads.length"
       >
         <v-card variant="outlined" class="bg-white">
           <v-card-title class="text-subtitle-1 font-weight-medium">
@@ -398,6 +417,7 @@
         cols="12"
         class="mt-4"
         v-if="
+          activeStep === 'workspace' &&
           includePatriotProquest &&
           patriotProquestRaw &&
           patriotProquestRaw.trim().length &&
@@ -445,7 +465,7 @@
       <v-col
         cols="12"
         class="mt-6"
-        v-if="claimAnalysis && claimAnalysis.results.length"
+        v-if="activeStep === 'analysis' && claimAnalysis && claimAnalysis.results.length"
       >
         <v-card variant="outlined" class="bg-white">
           <v-card-title class="text-subtitle-1 font-weight-medium">
@@ -646,6 +666,8 @@ import {
 const thesis = ref('');
 const claimsInput = ref('');
 
+const activeStep = ref<'thesis' | 'search' | 'workspace' | 'analysis'>('thesis');
+
 const searchQuery = ref('');
 const searchLimit = ref(15);
 const searchFromYear = ref<number | null>(null);
@@ -717,6 +739,45 @@ const canAnalyzeClaims = computed(() => {
 
   return !!enrichedSources.value && enrichedSources.value.length > 0;
 });
+
+function openPatriotAiWindow(): void {
+  if (typeof window === 'undefined') return;
+
+  const url =
+    'https://patriotai.gmu.edu/chat/5a1af569-32f9-4aaf-889f-3c74c8f71584';
+  const width = 420;
+  const maxHeight = 900;
+  const availHeight = window.screen?.availHeight || window.innerHeight || maxHeight;
+  const height = Math.min(availHeight, maxHeight);
+
+  const left = window.screenX;
+  const top = window.screenY;
+
+  const features = [
+    `width=${width}`,
+    `height=${height}`,
+    `left=${left}`,
+    `top=${top}`,
+    'resizable=yes',
+    'scrollbars=yes',
+  ].join(',');
+
+  const win = window.open(url, 'patriotai-citecompass', features);
+  if (!win) {
+    snackbarMessage.value =
+      'Popup was blocked. Please allow popups for PatriotAI and try again.';
+    snackbarColor.value = 'error';
+    snackbarVisible.value = true;
+  }
+}
+
+function onTogglePatriotProquest(value: boolean): void {
+  includePatriotProquest.value = value;
+
+  if (value) {
+    openPatriotAiWindow();
+  }
+}
 
 function normaliseLimit(value: number): number {
   if (!Number.isFinite(value)) {
@@ -834,6 +895,9 @@ async function onAddSelectedFromSearch(): Promise<void> {
         workspace.value.proquestLeads.push(...workspaceLeads);
       }
     }
+
+    // Move to the Workspace step after successfully enriching
+    activeStep.value = 'workspace';
   } catch (error) {
     const message =
       error instanceof Error
@@ -1224,6 +1288,9 @@ async function onAnalyzeClaims(): Promise<void> {
     });
 
     claimAnalysis.value = response;
+
+    // Move to the Analysis step after a successful response
+    activeStep.value = 'analysis';
   } catch (error) {
     const err = error as Error & { status?: number; body?: unknown };
     if (
