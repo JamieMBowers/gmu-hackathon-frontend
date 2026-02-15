@@ -1,4 +1,4 @@
-export const API_BASE_URL = 'https://gmu-hack-functions2.azurewebsites.net';
+import { apiFetch } from '../lib/api';
 
 // Types aligned with backend models (see backend/src/models/types.ts)
 
@@ -98,11 +98,8 @@ export interface SuggestionsResolveResponse {
   suggested: SearchResult[];
   unresolved_lines: string[];
 }
-
 async function request<TResponse>(path: string, body: unknown): Promise<TResponse> {
-  const url = new URL(path, API_BASE_URL).toString();
-
-  const response = await fetch(url, {
+  const response = await apiFetch(path, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -140,7 +137,7 @@ export async function enrichSources(
     sources: parsedSources,
   };
 
-  const result = await request<EnrichResult>('/api/sources/enrich', backendBody);
+  const result = await request<EnrichResult>('sources/enrich', backendBody);
 
   return result.enriched.map((item) => mapBackendEnrichedToUi(item));
 }
@@ -152,14 +149,14 @@ export async function searchOpenAlex(params: {
   from_year?: number;
   to_year?: number;
 }): Promise<SearchResponse> {
-  return await request<SearchResponse>('/api/search/openalex', params);
+  return await request<SearchResponse>('search/openalex', params);
 }
 
 export async function resolveSuggestions(body: {
   items: string[];
 }): Promise<SuggestionsResolveResponse> {
   return await request<SuggestionsResolveResponse>(
-    '/api/suggestions/resolve',
+    'suggestions/resolve',
     body,
   );
 }
@@ -168,7 +165,7 @@ export async function analyzeClaims(
   payload: import('../types/claims').ClaimAnalyzeRequest,
 ): Promise<import('../types/claims').ClaimAnalyzeResponse> {
   return await request<import('../types/claims').ClaimAnalyzeResponse>(
-    '/api/claims/analyze',
+    'claims/analyze',
     payload,
   );
 }

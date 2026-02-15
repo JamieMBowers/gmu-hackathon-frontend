@@ -674,7 +674,7 @@
                       variant="outlined"
                       :class="[
                         'gmu-article-card',
-                        `gmu-article-card--${claimResult.top_counter[0].stance}`,
+                        `gmu-article-card--${claimResult.top_counter[0]!.stance}`,
                       ]"
                     >
                       <v-card-text>
@@ -691,7 +691,7 @@
                             <div class="text-caption text-medium-emphasis text-uppercase">
                               Article · Counter
                               <span
-                                v-if="claimResult.top_counter[0].source_kind === 'proquest'"
+                                v-if="claimResult.top_counter[0]!.source_kind === 'proquest'"
                               >
                                 · ProQuest
                               </span>
@@ -710,12 +710,12 @@
                               variant="flat"
                               class="mr-2"
                             >
-                              {{ claimResult.top_counter[0].stance }}
+                              {{ claimResult.top_counter[0]!.stance }}
                             </v-chip>
 
                             <span class="text-caption text-medium-emphasis">
                               {{ Math.round(
-                                claimResult.top_counter[0].relevance * 100,
+                                claimResult.top_counter[0]!.relevance * 100,
                               ) }}% relevance
                             </span>
                           </div>
@@ -723,14 +723,14 @@
 
                         <div class="text-body-2 mb-2">
                           <span
-                            v-for="(sentence, index) in claimResult.top_counter[0]
+                            v-for="(sentence, index) in claimResult.top_counter[0]!
                               .evidence_sentences"
                             :key="index"
                           >
                             “{{ sentence }}”<span
                               v-if="
                                 index <
-                                claimResult.top_counter[0].evidence_sentences
+                                claimResult.top_counter[0]!.evidence_sentences
                                   .length - 1
                               "
                             >
@@ -743,34 +743,34 @@
                           APA citation
                         </div>
                         <div class="text-body-2">
-                          <template v-if="splitApaUrl(claimResult.top_counter[0].apa)">
+                          <template v-if="splitApaUrl(claimResult.top_counter[0]!.apa)">
                             <span>
-                              {{ splitApaUrl(claimResult.top_counter[0].apa)!.before }}
+                              {{ splitApaUrl(claimResult.top_counter[0]!.apa)!.before }}
                             </span>
                             <a
-                              :href="splitApaUrl(claimResult.top_counter[0].apa)!.url"
+                              :href="splitApaUrl(claimResult.top_counter[0]!.apa)!.url"
                               target="_blank"
                               rel="noopener"
                               class="text-primary"
                             >
-                              {{ splitApaUrl(claimResult.top_counter[0].apa)!.url }}
+                              {{ splitApaUrl(claimResult.top_counter[0]!.apa)!.url }}
                             </a>
                             <span>
-                              {{ splitApaUrl(claimResult.top_counter[0].apa)!.after }}
+                              {{ splitApaUrl(claimResult.top_counter[0]!.apa)!.after }}
                             </span>
                           </template>
                           <template v-else>
-                            {{ claimResult.top_counter[0].apa }}
+                            {{ claimResult.top_counter[0]!.apa }}
                           </template>
                         </div>
 
                         <div
-                          v-if="resolveEvidenceUrl(claimResult.top_counter[0])"
+                          v-if="resolveEvidenceUrl(claimResult.top_counter[0]!)"
                           class="mt-2"
                         >
                           <a
-                            :href="
-                              resolveEvidenceUrl(claimResult.top_counter[0]) ||
+                              :href="
+                              resolveEvidenceUrl(claimResult.top_counter[0]!) ||
                               undefined
                             "
                             target="_blank"
@@ -836,7 +836,6 @@ import {
   type SearchResult,
   analyzeClaims,
   type ClaimAnalyzeResponse,
-  resolveSuggestions,
 } from '../api/evidenceApi';
 import type { EvidenceHit } from '../types/claims';
 
@@ -855,7 +854,6 @@ const searchToYear = ref<number | null>(null);
 const searchExcludePreprints = ref(true);
 const searchResults = ref<SearchResult[]>([]);
 const suggestedSearchResults = ref<SearchResult[]>([]);
-const patriotResultsInput = ref('');
 const patriotSuggestedWorks = ref<SearchResult[]>([]);
 const patriotUnresolvedLines = ref<string[]>([]);
 
@@ -893,7 +891,6 @@ const isEnriching = ref(false);
 const isSearching = ref(false);
 const errorMessage = ref<string | null>(null);
 const isAnalyzingClaims = ref(false);
-const isResolvingSuggestions = ref(false);
 
 const snackbarVisible = ref(false);
 const snackbarMessage = ref('');
@@ -998,7 +995,10 @@ function showStepGuardMessage(step: StepId): void {
 function goToPreviousStep(): void {
   const idx = stepsOrder.indexOf(activeStep.value);
   if (idx > 0) {
-    activeStep.value = stepsOrder[idx - 1];
+    const prev = stepsOrder[idx - 1];
+    if (prev) {
+      activeStep.value = prev;
+    }
   }
 }
 
@@ -1013,7 +1013,10 @@ function goToNextStep(): void {
 
   const idx = stepsOrder.indexOf(activeStep.value);
   if (idx > -1 && idx < stepsOrder.length - 1) {
-    activeStep.value = stepsOrder[idx + 1];
+    const next = stepsOrder[idx + 1];
+    if (next) {
+      activeStep.value = next;
+    }
   }
 }
 
@@ -1050,10 +1053,11 @@ function openPatriotAiWindow(): void {
   }
 }
 
-function onTogglePatriotProquest(value: boolean): void {
-  includePatriotProquest.value = value;
+function onTogglePatriotProquest(value: boolean | null): void {
+  const checked = !!value;
+  includePatriotProquest.value = checked;
 
-  if (value) {
+  if (checked) {
     openPatriotAiWindow();
   }
 }
@@ -1275,18 +1279,29 @@ function parsePatriotAiProQuest(text: string): ProQuestLead[] {
   const leads: ProQuestLead[] = [];
 
   for (let i = 0; i < urls.length; i += 1) {
+    const url = urls[i];
+    if (!url) {
+      continue;
+    }
+
     const lead: ProQuestLead = {
-      id: `${now}-${i}-${urls[i]}`,
-      url: urls[i],
+      id: `${now}-${i}-${url}`,
+      url,
       addedAt: now,
     };
 
     if (titles.length === urls.length) {
-      lead.title = titles[i];
+      const title = titles[i];
+      if (title) {
+        lead.title = title;
+      }
     }
 
     if (dois.length === urls.length) {
-      lead.doi = dois[i];
+      const doi = dois[i];
+      if (doi) {
+        lead.doi = doi;
+      }
     }
 
     leads.push(lead);
@@ -1379,7 +1394,7 @@ function parsePatriotPaste(text: string): WorkspaceProquestLead[] {
     if (readMoreWithTitleMatch) {
       const matchIndex = line.toLowerCase().indexOf('read more');
       const before = matchIndex >= 0 ? line.slice(0, matchIndex).trim() : '';
-      const nextTitleRaw = readMoreWithTitleMatch[1].trim();
+      const nextTitleRaw = (readMoreWithTitleMatch[1] ?? '').trim();
 
       if (before && current) {
         current.summary = current.summary
@@ -1598,36 +1613,8 @@ Summary: Read more 2 . AI and Student Success: A Multi-Campus Study`;
   );
 }
 
-async function onResolvePatriotSuggestions(): Promise<void> {
-  const lines = patriotResultsInput.value
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
-
-  if (lines.length === 0) {
-    return;
-  }
-
-  isResolvingSuggestions.value = true;
-  patriotSuggestedWorks.value = [];
-  patriotUnresolvedLines.value = [];
-
-  try {
-    const response = await resolveSuggestions({ items: lines });
-    patriotSuggestedWorks.value = response.suggested ?? [];
-    patriotUnresolvedLines.value = response.unresolved_lines ?? [];
-  } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : 'Failed to resolve PatriotAI suggestions.';
-    snackbarMessage.value = message;
-    snackbarColor.value = 'error';
-    snackbarVisible.value = true;
-  } finally {
-    isResolvingSuggestions.value = false;
-  }
-}
+// Note: onResolvePatriotSuggestions was removed because it is not currently
+// used in the template and strict TypeScript settings disallow unused locals.
 
 async function onAnalyzeClaims(): Promise<void> {
   if (!canAnalyzeClaims.value || !enrichedSources.value) {
@@ -1757,7 +1744,7 @@ async function onCopyCourseMatePrompt(result: ClaimResult): Promise<void> {
   if (result.top_counter.length === 0) {
     lines.push('- (no counter evidence found)');
   } else {
-    const hit = result.top_counter[0];
+    const hit = result.top_counter[0]!;
     lines.push(`- APA: ${hit.apa}`);
     lines.push('  Evidence sentences:');
     for (const sentence of hit.evidence_sentences) {
@@ -1791,49 +1778,10 @@ async function onCopyCourseMatePrompt(result: ClaimResult): Promise<void> {
   }
 }
 
-async function onCopyPatriotPrompt(): Promise<void> {
-  const claims = buildClaimsArray(claimsInput.value);
+// Note: onCopyPatriotPrompt was removed because it is not currently referenced
+// from the template and triggers unused local errors under strict settings.
 
-  const lines: string[] = [];
-  lines.push(`Thesis: ${thesis.value.trim() || '(none provided)'}`);
-  lines.push('');
-  lines.push('Claims:');
-  if (claims.length === 0) {
-    lines.push('- (no explicit claims provided)');
-  } else {
-    for (const claim of claims) {
-      lines.push(`- ${claim}`);
-    }
-  }
-  lines.push('');
-  lines.push(`Current OpenAlex search query: ${searchQuery.value.trim() || '(none)'}`);
-  lines.push('');
-  lines.push(
-    'Instruction: Suggest additional academic works relevant to this thesis and these claims. Output one item per line. For each item, prefer a bare DOI (e.g., 10.xxxx/...), or if DOI is unknown, output the exact paper title (optionally with a link).',
-  );
-
-  const prompt = lines.join('\n');
-
-  try {
-    if (!navigator.clipboard || !navigator.clipboard.writeText) {
-      throw new Error('Clipboard API is not available in this browser.');
-    }
-
-    await navigator.clipboard.writeText(prompt);
-    snackbarMessage.value = 'PatriotAI prompt copied to clipboard.';
-    snackbarColor.value = 'success';
-    snackbarVisible.value = true;
-  } catch (error) {
-    snackbarMessage.value =
-      error instanceof Error
-        ? error.message
-        : 'Failed to copy PatriotAI prompt to clipboard.';
-    snackbarColor.value = 'error';
-    snackbarVisible.value = true;
-  }
-}
-
-function resolvePrimaryLink(result: SearchResult): string | null {
+function resolvePrimaryLink(result: SearchResult): string | undefined {
   if (result.doi && result.doi.trim().length > 0) {
     return `https://doi.org/${result.doi}`;
   }
@@ -1842,7 +1790,7 @@ function resolvePrimaryLink(result: SearchResult): string | null {
     return result.url;
   }
 
-  return null;
+  return undefined;
 }
 
 function resolveEvidenceUrl(hit: EvidenceHit): string | null {
@@ -1941,7 +1889,7 @@ function isResultSelected(result: SearchResult): boolean {
   );
 }
 
-function onToggleResultSelected(result: SearchResult, selected: boolean): void {
+function onToggleResultSelected(result: SearchResult, selected: boolean | null): void {
   if (selected) {
     if (!isResultSelected(result)) {
       selectedSearchResults.value = [...selectedSearchResults.value, result];
@@ -1953,7 +1901,7 @@ function onToggleResultSelected(result: SearchResult, selected: boolean): void {
   }
 }
 
-function onToggleSelectAllPrimary(selected: boolean): void {
+function onToggleSelectAllPrimary(selected: boolean | null): void {
   if (selected) {
     const merged = new Map<string, SearchResult>();
     for (const item of selectedSearchResults.value) {
@@ -1971,7 +1919,7 @@ function onToggleSelectAllPrimary(selected: boolean): void {
   }
 }
 
-function onToggleSelectAllSuggested(selected: boolean): void {
+function onToggleSelectAllSuggested(selected: boolean | null): void {
   if (selected) {
     const merged = new Map<string, SearchResult>();
     for (const item of selectedSearchResults.value) {
