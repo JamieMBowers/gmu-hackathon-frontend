@@ -175,7 +175,14 @@
                   <v-table density="comfortable">
                     <thead>
                       <tr class="text-caption text-medium-emphasis">
-                        <th class="text-left" style="width: 40px"></th>
+                        <th class="text-left" style="width: 40px">
+                          <v-checkbox
+                            :model-value="allPrimaryResultsSelected"
+                            density="compact"
+                            hide-details
+                            @update:model-value="onToggleSelectAllPrimary"
+                          />
+                        </th>
                         <th class="text-left">Title</th>
                         <th class="text-left" style="width: 80px">Year</th>
                         <th class="text-left" style="width: 160px">Venue</th>
@@ -244,7 +251,14 @@
                   <v-table density="comfortable">
                     <thead>
                       <tr class="text-caption text-medium-emphasis">
-                        <th class="text-left" style="width: 40px"></th>
+                        <th class="text-left" style="width: 40px">
+                          <v-checkbox
+                            :model-value="allSuggestedResultsSelected"
+                            density="compact"
+                            hide-details
+                            @update:model-value="onToggleSelectAllSuggested"
+                          />
+                        </th>
                         <th class="text-left">Title</th>
                         <th class="text-left" style="width: 80px">Year</th>
                         <th class="text-left" style="width: 160px">Venue</th>
@@ -886,6 +900,16 @@ const snackbarMessage = ref('');
 const snackbarColor = ref<'success' | 'error'>('error');
 
 type ClaimResult = ClaimAnalyzeResponse['results'][number];
+
+const allPrimaryResultsSelected = computed(() => {
+  if (searchResults.value.length === 0) return false;
+  return searchResults.value.every((result) => isResultSelected(result));
+});
+
+const allSuggestedResultsSelected = computed(() => {
+  if (suggestedSearchResults.value.length === 0) return false;
+  return suggestedSearchResults.value.every((result) => isResultSelected(result));
+});
 
 const canSearch = computed(() => searchQuery.value.trim().length > 0);
 
@@ -1925,6 +1949,42 @@ function onToggleResultSelected(result: SearchResult, selected: boolean): void {
   } else {
     selectedSearchResults.value = selectedSearchResults.value.filter(
       (item) => item.openalex_id !== result.openalex_id,
+    );
+  }
+}
+
+function onToggleSelectAllPrimary(selected: boolean): void {
+  if (selected) {
+    const merged = new Map<string, SearchResult>();
+    for (const item of selectedSearchResults.value) {
+      merged.set(item.openalex_id, item);
+    }
+    for (const item of searchResults.value) {
+      merged.set(item.openalex_id, item);
+    }
+    selectedSearchResults.value = Array.from(merged.values());
+  } else {
+    const ids = new Set(searchResults.value.map((r) => r.openalex_id));
+    selectedSearchResults.value = selectedSearchResults.value.filter(
+      (item) => !ids.has(item.openalex_id),
+    );
+  }
+}
+
+function onToggleSelectAllSuggested(selected: boolean): void {
+  if (selected) {
+    const merged = new Map<string, SearchResult>();
+    for (const item of selectedSearchResults.value) {
+      merged.set(item.openalex_id, item);
+    }
+    for (const item of suggestedSearchResults.value) {
+      merged.set(item.openalex_id, item);
+    }
+    selectedSearchResults.value = Array.from(merged.values());
+  } else {
+    const ids = new Set(suggestedSearchResults.value.map((r) => r.openalex_id));
+    selectedSearchResults.value = selectedSearchResults.value.filter(
+      (item) => !ids.has(item.openalex_id),
     );
   }
 }
