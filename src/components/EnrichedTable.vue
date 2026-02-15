@@ -47,7 +47,7 @@
             </div>
           </v-expansion-panel-title>
 
-          <v-expansion-panel-text>
+          <v-expansion-panel-text class="gmu-enriched-detail">
             <div class="mb-3">
               <div class="text-caption text-medium-emphasis mb-1">
                 APA citation

@@ -13,7 +13,23 @@ const vuetify = createVuetify({
 	components,
 	directives,
 	theme: {
-		defaultTheme: 'light',
+		defaultTheme: 'gmuLight',
+		themes: {
+			gmuLight: {
+				colors: {
+					// GMU green & gold inspired palette
+					primary: '#006633',
+					secondary: '#FFCC33',
+					accent: '#004221',
+					background: '#F5F5F5',
+					surface: '#FFFFFF',
+					info: '#2563EB',
+					success: '#16A34A',
+					warning: '#F59E0B',
+					error: '#B91C1C',
+				},
+			},
+		},
 	},
 });
 

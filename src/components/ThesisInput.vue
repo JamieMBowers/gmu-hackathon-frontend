@@ -1,10 +1,10 @@
 <template>
-  <v-card variant="outlined" class="bg-white">
-    <v-card-title class="text-subtitle-1 font-weight-medium">
+  <v-card variant="outlined" class="bg-white gmu-step-card">
+    <v-card-title class="text-subtitle-1 font-weight-medium gmu-step-card-title">
       Thesis and claims
     </v-card-title>
 
-    <v-card-text>
+    <v-card-text class="gmu-step-card-subtitle">
       <v-text-field
         v-model="thesisModel"
         label="Thesis statement"

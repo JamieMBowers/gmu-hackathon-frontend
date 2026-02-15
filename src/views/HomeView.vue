@@ -11,7 +11,7 @@
 
     <v-row justify="center">
       <v-col cols="12">
-        <div class="text-h5 font-weight-medium mb-2">
+        <div class="text-h5 font-weight-medium mb-1" style="color: #004221">
           Evidence exploration workspace
         </div>
         <div class="text-body-2 text-medium-emphasis mb-4">
@@ -31,11 +31,12 @@
         </v-alert>
       </v-col>
 
-      <v-col cols="12" class="mt-4">
+      <v-col cols="12" class="mt-4 mb-0 pb-0">
         <v-tabs
-          v-model="activeStep"
+          :model-value="activeStep"
+          @update:model-value="onStepTabChange"
           density="comfortable"
-          class="bg-transparent"
+          class="bg-transparent gmu-tabs"
           grow
         >
           <v-tab value="thesis">1. Thesis & claims</v-tab>
@@ -45,20 +46,20 @@
         </v-tabs>
       </v-col>
 
-      <v-col cols="12" class="mt-2" v-if="activeStep === 'thesis'">
+      <v-col cols="12" class="mt-0 pt-0" v-if="activeStep === 'thesis'">
         <ThesisInput
           v-model:thesis="thesis"
           v-model:claims="claimsInput"
         />
       </v-col>
 
-      <v-col cols="12" class="mt-2" v-if="activeStep === 'search'">
-        <v-card variant="outlined" class="bg-white mb-4">
-          <v-card-title class="text-subtitle-1 font-weight-medium">
+      <v-col cols="12" class="mt-0 pt-0" v-if="activeStep === 'search'">
+        <v-card variant="outlined" class="bg-white mb-4 gmu-step-card">
+          <v-card-title class="text-subtitle-1 font-weight-medium gmu-step-card-title">
             Search OpenAlex
           </v-card-title>
 
-          <v-card-text>
+          <v-card-text class="gmu-step-card-subtitle">
             <v-row dense>
               <v-col cols="12">
                 <v-text-field
@@ -361,54 +362,61 @@
         class="mt-6"
         v-if="activeStep === 'workspace' && proquestLeads.length"
       >
-        <v-card variant="outlined" class="bg-white">
-          <v-card-title class="text-subtitle-1 font-weight-medium">
+        <v-card variant="outlined" class="bg-white gmu-step-card">
+          <v-card-title class="text-subtitle-1 font-weight-medium gmu-step-card-title">
             PatriotAI / ProQuest Reading List
           </v-card-title>
 
-          <v-card-text>
+          <v-card-text class="gmu-step-card-subtitle">
             <div class="text-body-2 text-medium-emphasis mb-3">
               Leads suggested by PatriotAI from ProQuest. These are not
               verified citations; review and verify in OpenAlex before using
               as evidence.
             </div>
 
-            <v-list density="comfortable">
-              <v-list-item
+            <v-expansion-panels variant="accordion">
+              <v-expansion-panel
                 v-for="lead in proquestLeads"
                 :key="lead.url + '-' + lead.addedAt"
               >
-                <v-list-item-title>
-                  {{ lead.title || 'ProQuest link' }}
-                </v-list-item-title>
-                <v-list-item-subtitle>
-                  <span v-if="lead.doi">DOI: {{ lead.doi }}</span>
-                  <span v-else>Added {{ formatLeadAddedAt(lead.addedAt) }}</span>
-                </v-list-item-subtitle>
+                <v-expansion-panel-title>
+                  <div class="d-flex flex-column flex-md-row align-center w-100">
+                    <div class="flex-grow-1">
+                      <div class="text-body-1 font-weight-medium">
+                        {{ lead.title || 'ProQuest link' }}
+                      </div>
+                      <div class="text-caption text-medium-emphasis mt-1">
+                        <span v-if="lead.doi">DOI: {{ lead.doi }}</span>
+                        <span v-else>Added {{ formatLeadAddedAt(lead.addedAt) }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </v-expansion-panel-title>
 
-                <template #append>
-                  <v-btn
-                    size="small"
-                    variant="text"
-                    color="primary"
-                    :href="lead.url"
-                    target="_blank"
-                  >
-                    Open in ProQuest
-                  </v-btn>
+                <v-expansion-panel-text class="gmu-enriched-detail">
+                  <div class="d-flex flex-wrap gap-2">
+                    <v-btn
+                      size="small"
+                      variant="text"
+                      color="primary"
+                      :href="lead.url"
+                      target="_blank"
+                    >
+                      Open in ProQuest
+                    </v-btn>
 
-                  <v-btn
-                    size="small"
-                    variant="text"
-                    color="secondary"
-                    class="ml-2"
-                    @click="onSearchLeadInOpenAlex(lead)"
-                  >
-                    Search in OpenAlex
-                  </v-btn>
-                </template>
-              </v-list-item>
-            </v-list>
+                    <v-btn
+                      size="small"
+                      variant="text"
+                      color="secondary"
+                      @click="onSearchLeadInOpenAlex(lead)"
+                    >
+                      Search in OpenAlex
+                    </v-btn>
+                  </div>
+                </v-expansion-panel-text>
+              </v-expansion-panel>
+            </v-expansion-panels>
           </v-card-text>
         </v-card>
       </v-col>
@@ -425,39 +433,68 @@
           workspace.proquestLeads.length
         "
       >
-        <v-card variant="outlined" class="bg-white">
-          <v-card-title class="text-subtitle-1 font-weight-medium">
+        <v-card variant="outlined" class="bg-white gmu-step-card">
+          <v-card-title class="text-subtitle-1 font-weight-medium gmu-step-card-title">
             ProQuest sources (PatriotAI)
           </v-card-title>
-          <v-card-text>
+          <v-card-text class="gmu-step-card-subtitle">
             <div class="text-body-2 text-medium-emphasis mb-3">
               Summaries you pasted from PatriotAI / ProQuest. These are used
               alongside OpenAlex workspace sources when you analyze claims.
             </div>
 
-            <v-list density="comfortable">
-              <v-list-item
+            <v-expansion-panels variant="accordion">
+              <v-expansion-panel
                 v-for="lead in workspace.proquestLeads"
                 :key="lead.title + '-' + lead.addedAt"
               >
-                <v-list-item-title>
-                  {{ lead.title }}
-                </v-list-item-title>
-                <v-list-item-subtitle>
-                  <span v-if="lead.authors">{{ lead.authors }}</span>
-                  <span v-if="lead.journal">
-                    <span v-if="lead.authors"> · </span>{{ lead.journal }}
-                  </span>
-                </v-list-item-subtitle>
+                <v-expansion-panel-title>
+                  <div class="d-flex flex-column flex-md-row align-center w-100">
+                    <div class="flex-grow-1">
+                      <div class="text-body-1 font-weight-medium">
+                        {{ lead.title }}
+                      </div>
+                      <div class="text-caption text-medium-emphasis mt-1">
+                        <span v-if="lead.authors">{{ lead.authors }}</span>
+                        <span v-if="lead.journal">
+                          <span v-if="lead.authors"> · </span>{{ lead.journal }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </v-expansion-panel-title>
 
-                <div
-                  v-if="lead.summary"
-                  class="text-body-2 mt-2"
-                >
-                  {{ lead.summary }}
-                </div>
-              </v-list-item>
-            </v-list>
+                <v-expansion-panel-text class="gmu-enriched-detail">
+                  <div v-if="lead.summary" class="text-body-2 mb-2">
+                    {{ lead.summary }}
+                  </div>
+
+                  <div class="d-flex flex-wrap gap-2">
+                    <v-btn
+                      v-if="lead.url"
+                      size="small"
+                      variant="text"
+                      color="primary"
+                      :href="lead.url"
+                      target="_blank"
+                    >
+                      Open in ProQuest
+                    </v-btn>
+
+                    <v-btn
+                      v-else-if="lead.doi"
+                      size="small"
+                      variant="text"
+                      color="primary"
+                      :href="`https://doi.org/${lead.doi}`"
+                      target="_blank"
+                    >
+                      Open DOI
+                    </v-btn>
+                  </div>
+                </v-expansion-panel-text>
+              </v-expansion-panel>
+            </v-expansion-panels>
           </v-card-text>
         </v-card>
       </v-col>
@@ -467,12 +504,12 @@
         class="mt-6"
         v-if="activeStep === 'analysis' && claimAnalysis && claimAnalysis.results.length"
       >
-        <v-card variant="outlined" class="bg-white">
-          <v-card-title class="text-subtitle-1 font-weight-medium">
+        <v-card variant="outlined" class="bg-white gmu-step-card">
+          <v-card-title class="text-subtitle-1 font-weight-medium gmu-step-card-title">
             Claim analysis overview
           </v-card-title>
 
-          <v-card-subtitle class="text-body-2 text-medium-emphasis">
+          <v-card-subtitle class="text-body-2 text-medium-emphasis gmu-step-card-subtitle">
             Model {{ claimAnalysis.meta.model }} ·
             {{ claimAnalysis.meta.per_claim_calls }} calls ·
             {{ claimAnalysis.meta.sources_considered }} sources considered
@@ -488,9 +525,9 @@
               >
                 <v-card variant="flat" class="mb-2">
                   <v-card-title
-                    class="text-subtitle-1 font-weight-medium d-flex justify-space-between align-center"
+                    class="gmu-claim-title-row d-flex justify-space-between align-center"
                   >
-                    <span>{{ claimResult.claim }}</span>
+                    <span class="gmu-claim-title">{{ claimResult.claim }}</span>
 
                     <v-btn
                       size="small"
@@ -517,29 +554,47 @@
                         md="6"
                         class="mb-2"
                       >
-                        <v-card variant="outlined" class="h-100">
+                        <v-card
+                          variant="outlined"
+                          class="h-100 gmu-article-card"
+                          :class="`gmu-article-card--${hit.stance}`"
+                        >
                           <v-card-text>
-                            <div class="d-flex justify-space-between align-center mb-2">
-                              <v-chip
-                                size="x-small"
-                                color="green-darken-1"
-                                variant="flat"
-                              >
-                                {{ hit.stance }}
-                              </v-chip>
+                            <div
+                              class="gmu-article-header d-flex justify-space-between align-center mb-2"
+                            >
+                              <div class="d-flex align-center">
+                                <v-icon
+                                  size="small"
+                                  color="primary"
+                                  class="mr-2"
+                                  icon="mdi-file-document-outline"
+                                />
+                                <div class="text-caption text-medium-emphasis text-uppercase">
+                                  Article
+                                  <span v-if="hit.source_kind === 'proquest'">
+                                    · ProQuest
+                                  </span>
+                                  <span v-else>
+                                    · OpenAlex
+                                  </span>
+                                </div>
+                              </div>
 
-                              <v-chip
-                                v-if="hit.source_kind === 'proquest'"
-                                size="x-small"
-                                color="purple"
-                                variant="outlined"
-                              >
-                                User-provided (ProQuest)
-                              </v-chip>
+                              <div class="d-flex align-center gmu-article-meta">
+                                <v-chip
+                                  size="x-small"
+                                  color="green-darken-1"
+                                  variant="flat"
+                                  class="mr-2"
+                                >
+                                  {{ hit.stance }}
+                                </v-chip>
 
-                              <span class="text-caption text-medium-emphasis">
-                                {{ Math.round(hit.relevance * 100) }}% relevance
-                              </span>
+                                <span class="text-caption text-medium-emphasis">
+                                  {{ Math.round(hit.relevance * 100) }}% relevance
+                                </span>
+                              </div>
                             </div>
 
                             <div class="text-body-2 mb-2">
@@ -559,7 +614,35 @@
                               APA citation
                             </div>
                             <div class="text-body-2">
-                              {{ hit.apa }}
+                              <template v-if="splitApaUrl(hit.apa)">
+                                <span>{{ splitApaUrl(hit.apa)!.before }}</span>
+                                <a
+                                  :href="splitApaUrl(hit.apa)!.url"
+                                  target="_blank"
+                                  rel="noopener"
+                                  class="text-primary"
+                                >
+                                  {{ splitApaUrl(hit.apa)!.url }}
+                                </a>
+                                <span>{{ splitApaUrl(hit.apa)!.after }}</span>
+                              </template>
+                              <template v-else>
+                                {{ hit.apa }}
+                              </template>
+                            </div>
+
+                            <div
+                              v-if="resolveEvidenceUrl(hit)"
+                              class="mt-2"
+                            >
+                              <a
+                                :href="resolveEvidenceUrl(hit) || undefined"
+                                target="_blank"
+                                rel="noopener"
+                                class="text-primary text-caption font-weight-medium"
+                              >
+                                Open article
+                              </a>
                             </div>
                           </v-card-text>
                         </v-card>
@@ -575,31 +658,53 @@
                     <v-card
                       v-if="claimResult.top_counter.length"
                       variant="outlined"
+                      :class="[
+                        'gmu-article-card',
+                        `gmu-article-card--${claimResult.top_counter[0].stance}`,
+                      ]"
                     >
                       <v-card-text>
-                        <div class="d-flex justify-space-between align-center mb-2">
-                          <v-chip
-                            size="x-small"
-                            color="red-darken-1"
-                            variant="flat"
-                          >
-                            {{ claimResult.top_counter[0].stance }}
-                          </v-chip>
+                        <div
+                          class="gmu-article-header d-flex justify-space-between align-center mb-2"
+                        >
+                          <div class="d-flex align-center">
+                            <v-icon
+                              size="small"
+                              color="primary"
+                              class="mr-2"
+                              icon="mdi-file-document-outline"
+                            />
+                            <div class="text-caption text-medium-emphasis text-uppercase">
+                              Article · Counter
+                              <span
+                                v-if="claimResult.top_counter[0].source_kind === 'proquest'"
+                              >
+                                · ProQuest
+                              </span>
+                              <span
+                                v-else
+                              >
+                                · OpenAlex
+                              </span>
+                            </div>
+                          </div>
 
-                          <v-chip
-                            v-if="claimResult.top_counter[0].source_kind === 'proquest'"
-                            size="x-small"
-                            color="purple"
-                            variant="outlined"
-                          >
-                            User-provided (ProQuest)
-                          </v-chip>
+                          <div class="d-flex align-center gmu-article-meta">
+                            <v-chip
+                              size="x-small"
+                              color="red-darken-1"
+                              variant="flat"
+                              class="mr-2"
+                            >
+                              {{ claimResult.top_counter[0].stance }}
+                            </v-chip>
 
-                          <span class="text-caption text-medium-emphasis">
-                            {{ Math.round(
-                              claimResult.top_counter[0].relevance * 100,
-                            ) }}% relevance
-                          </span>
+                            <span class="text-caption text-medium-emphasis">
+                              {{ Math.round(
+                                claimResult.top_counter[0].relevance * 100,
+                              ) }}% relevance
+                            </span>
+                          </div>
                         </div>
 
                         <div class="text-body-2 mb-2">
@@ -624,7 +729,42 @@
                           APA citation
                         </div>
                         <div class="text-body-2">
-                          {{ claimResult.top_counter[0].apa }}
+                          <template v-if="splitApaUrl(claimResult.top_counter[0].apa)">
+                            <span>
+                              {{ splitApaUrl(claimResult.top_counter[0].apa)!.before }}
+                            </span>
+                            <a
+                              :href="splitApaUrl(claimResult.top_counter[0].apa)!.url"
+                              target="_blank"
+                              rel="noopener"
+                              class="text-primary"
+                            >
+                              {{ splitApaUrl(claimResult.top_counter[0].apa)!.url }}
+                            </a>
+                            <span>
+                              {{ splitApaUrl(claimResult.top_counter[0].apa)!.after }}
+                            </span>
+                          </template>
+                          <template v-else>
+                            {{ claimResult.top_counter[0].apa }}
+                          </template>
+                        </div>
+
+                        <div
+                          v-if="resolveEvidenceUrl(claimResult.top_counter[0])"
+                          class="mt-2"
+                        >
+                          <a
+                            :href="
+                              resolveEvidenceUrl(claimResult.top_counter[0]) ||
+                              undefined
+                            "
+                            target="_blank"
+                            rel="noopener"
+                            class="text-primary text-caption font-weight-medium"
+                          >
+                            Open article
+                          </a>
                         </div>
                       </v-card-text>
                     </v-card>
@@ -644,6 +784,28 @@
           </v-card-text>
         </v-card>
       </v-col>
+      
+      <v-col cols="12" class="d-flex justify-space-between mt-6">
+        <v-btn
+          variant="outlined"
+          color="primary"
+          :disabled="!canGoPreviousStep"
+          @click="goToPreviousStep"
+        >
+          <v-icon start icon="mdi-arrow-left" class="mr-1" />
+          Previous
+        </v-btn>
+
+        <v-btn
+          variant="flat"
+          color="primary"
+          :disabled="!canGoNextStep"
+          @click="goToNextStep"
+        >
+          Next
+          <v-icon end icon="mdi-arrow-right" class="ml-1" />
+        </v-btn>
+      </v-col>
     </v-row>
   </v-container>
 </template>
@@ -662,11 +824,15 @@ import {
   type ClaimAnalyzeResponse,
   resolveSuggestions,
 } from '../api/evidenceApi';
+import type { EvidenceHit } from '../types/claims';
+
+type StepId = 'thesis' | 'search' | 'workspace' | 'analysis';
 
 const thesis = ref('');
 const claimsInput = ref('');
 
-const activeStep = ref<'thesis' | 'search' | 'workspace' | 'analysis'>('thesis');
+const stepsOrder: StepId[] = ['thesis', 'search', 'workspace', 'analysis'];
+const activeStep = ref<StepId>('thesis');
 
 const searchQuery = ref('');
 const searchLimit = ref(15);
@@ -740,6 +906,93 @@ const canAnalyzeClaims = computed(() => {
   return !!enrichedSources.value && enrichedSources.value.length > 0;
 });
 
+function isThesisStepComplete(): boolean {
+  if (!thesis.value.trim()) {
+    return false;
+  }
+
+  const claims = buildClaimsArray(claimsInput.value);
+  return claims.length > 0;
+}
+
+function isWorkspaceReady(): boolean {
+  return !!enrichedSources.value && enrichedSources.value.length > 0;
+}
+
+function isAnalysisReady(): boolean {
+  return canAnalyzeClaims.value;
+}
+
+function canAdvanceFrom(step: StepId): boolean {
+  switch (step) {
+    case 'thesis':
+      return isThesisStepComplete();
+    case 'search':
+      // Search step is "complete" once at least one item is in the workspace
+      return isWorkspaceReady();
+    case 'workspace':
+      return isAnalysisReady();
+    case 'analysis':
+    default:
+      return false;
+  }
+}
+
+const canGoPreviousStep = computed(() => {
+  const idx = stepsOrder.indexOf(activeStep.value);
+  return idx > 0;
+});
+
+const canGoNextStep = computed(() => {
+  const idx = stepsOrder.indexOf(activeStep.value);
+  if (idx === -1 || idx >= stepsOrder.length - 1) {
+    return false;
+  }
+
+  return canAdvanceFrom(activeStep.value);
+});
+
+function showStepGuardMessage(step: StepId): void {
+  let message = '';
+
+  if (step === 'search') {
+    message = 'Add a thesis and at least one claim to continue.';
+  } else if (step === 'workspace') {
+    message = 'Add at least one OpenAlex work to your workspace first.';
+  } else if (step === 'analysis') {
+    message =
+      'Provide a thesis, claims, and at least one workspace source before analyzing.';
+  }
+
+  if (message) {
+    snackbarMessage.value = message;
+    snackbarColor.value = 'error';
+    snackbarVisible.value = true;
+  }
+}
+
+function goToPreviousStep(): void {
+  const idx = stepsOrder.indexOf(activeStep.value);
+  if (idx > 0) {
+    activeStep.value = stepsOrder[idx - 1];
+  }
+}
+
+function goToNextStep(): void {
+  if (!canAdvanceFrom(activeStep.value)) {
+    const current = activeStep.value;
+    const nextIdx = stepsOrder.indexOf(current) + 1;
+    const next = stepsOrder[nextIdx] ?? current;
+    showStepGuardMessage(next);
+    return;
+  }
+
+  const idx = stepsOrder.indexOf(activeStep.value);
+  if (idx > -1 && idx < stepsOrder.length - 1) {
+    activeStep.value = stepsOrder[idx + 1];
+  }
+}
+
 function openPatriotAiWindow(): void {
   if (typeof window === 'undefined') return;
 
@@ -750,8 +1003,10 @@ function openPatriotAiWindow(): void {
   const availHeight = window.screen?.availHeight || window.innerHeight || maxHeight;
   const height = Math.min(availHeight, maxHeight);
 
-  const left = window.screenX;
-  const top = window.screenY;
+  const padding = 16;
+  const viewportWidth = window.outerWidth || window.innerWidth;
+  const left = window.screenX + Math.max(viewportWidth - width - padding, 0);
+  const top = window.screenY + padding;
 
   const features = [
     `width=${width}`,
@@ -777,6 +1032,48 @@ function onTogglePatriotProquest(value: boolean): void {
   if (value) {
     openPatriotAiWindow();
   }
+}
+
+function onStepTabChange(next: StepId): void {
+  if (next === activeStep.value) {
+    return;
+  }
+
+  const currentIdx = stepsOrder.indexOf(activeStep.value);
+  const nextIdx = stepsOrder.indexOf(next);
+
+  if (nextIdx === -1) {
+    return;
+  }
+
+  // Always allow moving backwards
+  if (nextIdx < currentIdx) {
+    activeStep.value = next;
+    return;
+  }
+
+  // Moving forwards: enforce per-step completion
+  let allowed = false;
+  switch (next) {
+    case 'search':
+      allowed = isThesisStepComplete();
+      break;
+    case 'workspace':
+      allowed = isWorkspaceReady();
+      break;
+    case 'analysis':
+      allowed = isAnalysisReady();
+      break;
+    default:
+      allowed = true;
+  }
+
+  if (!allowed) {
+    showStepGuardMessage(next);
+    return;
+  }
+
+  activeStep.value = next;
 }
 
 function normaliseLimit(value: number): number {
@@ -998,8 +1295,14 @@ function parsePatriotPaste(text: string): WorkspaceProquestLead[] {
       'authors:',
       'journal:',
       'published',
+      'publication',
+      'date',
       'doi:',
       'summary:',
+      'publisher:',
+      'publication date:',
+      'volume:',
+      'abstract:',
       'read more',
       'http',
       '[',
@@ -1079,6 +1382,11 @@ function parsePatriotPaste(text: string): WorkspaceProquestLead[] {
       continue;
     }
 
+    // Ignore standalone section labels like "Publication" or "Date"
+    if (/^(publication:?|date:?)$/i.test(line)) {
+      continue;
+    }
+
     // Metadata lines attach to current item
     if (/^authors?:/i.test(line)) {
       if (current) {
@@ -1106,6 +1414,60 @@ function parsePatriotPaste(text: string): WorkspaceProquestLead[] {
         if (value) {
           current.doi = value.replace(/[).,;]+$/, '');
         }
+      }
+      continue;
+    }
+
+    // Additional metadata lines from PatriotAI outputs that we want to
+    // treat as details on the current item rather than new titles.
+    if (/^publisher:/i.test(line)) {
+      if (current) {
+        const value = line.replace(/^publisher:/i, '').trim();
+        if (value) {
+          const fragment = `Publisher: ${value}`;
+          current.summary = current.summary
+            ? `${current.summary} ${fragment}`
+            : fragment;
+        }
+      }
+      continue;
+    }
+
+    if (/^publication date:/i.test(line)) {
+      if (current) {
+        const value = line.replace(/^publication date:/i, '').trim();
+        if (value) {
+          const fragment = `Publication date: ${value}`;
+          current.summary = current.summary
+            ? `${current.summary} ${fragment}`
+            : fragment;
+        }
+      }
+      continue;
+    }
+
+    if (/^volume:/i.test(line)) {
+      if (current) {
+        const value = line.replace(/^volume:/i, '').trim();
+        if (value) {
+          const fragment = `Volume: ${value}`;
+          current.summary = current.summary
+            ? `${current.summary} ${fragment}`
+            : fragment;
+        }
+      }
+      continue;
+    }
+
+    if (/^abstract:/i.test(line)) {
+      if (current) {
+        const value = line.replace(/^abstract:/i, '').trim();
+        if (value) {
+          current.summary = current.summary
+            ? `${current.summary} ${value}`
+            : value;
+        }
+        inSummary = true;
       }
       continue;
     }
@@ -1457,6 +1819,77 @@ function resolvePrimaryLink(result: SearchResult): string | null {
   }
 
   return null;
+}
+
+function resolveEvidenceUrl(hit: EvidenceHit): string | null {
+  // Try to resolve against enriched OpenAlex sources first
+  if (hit.source_kind === 'openalex' && enrichedSources.value) {
+    const source = enrichedSources.value.find((item) => {
+      return (
+        item.id === hit.source_id ||
+        item.openalexId === hit.source_id ||
+        (item.doi && hit.source_id && hit.source_id.includes(item.doi))
+      );
+    });
+
+    if (source) {
+      if (source.url && source.url.trim().length > 0) {
+        return source.url;
+      }
+      if (source.doi && source.doi.trim().length > 0) {
+        return `https://doi.org/${source.doi}`;
+      }
+      if (source.doiUrl && source.doiUrl.trim().length > 0) {
+        return source.doiUrl;
+      }
+    }
+  }
+
+  // For ProQuest evidence, try to match back to user-provided leads
+  if (hit.source_kind === 'proquest') {
+    const allLeads: { url?: string; doi?: string }[] = [
+      ...proquestLeads.value,
+      ...(workspace.value.proquestLeads ?? []),
+    ];
+
+    const lead = allLeads.find((item) => {
+      return (
+        (item.url && hit.source_id && hit.source_id.includes(item.url)) ||
+        (item.doi && hit.source_id && hit.source_id.includes(item.doi))
+      );
+    });
+
+    if (lead) {
+      if (lead.url && lead.url.trim().length > 0) {
+        return lead.url;
+      }
+      if (lead.doi && lead.doi.trim().length > 0) {
+        return `https://doi.org/${lead.doi}`;
+      }
+    }
+  }
+
+  return null;
+}
+
+function splitApaUrl(apa: string):
+  | { before: string; url: string; after: string }
+  | null {
+  if (!apa) {
+    return null;
+  }
+
+  const match = apa.match(/https?:\/\/\S+/);
+  if (!match) {
+    return null;
+  }
+
+  const url = match[0];
+  const index = match.index ?? 0;
+  const before = apa.slice(0, index).trimEnd();
+  const after = apa.slice(index + url.length).trimStart();
+
+  return { before, url, after };
 }
 
 function formatLeadAddedAt(value: string): string {
