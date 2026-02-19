@@ -598,7 +598,7 @@
                               <div class="d-flex align-center gmu-article-meta">
                                 <v-chip
                                   size="x-small"
-                                  color="green-darken-1"
+                                  :color="getStanceChipColor(hit.stance)"
                                   variant="flat"
                                   class="mr-2"
                                 >
@@ -706,7 +706,7 @@
                           <div class="d-flex align-center gmu-article-meta">
                             <v-chip
                               size="x-small"
-                              color="red-darken-1"
+                              :color="getStanceChipColor(claimResult.top_counter[0]!.stance)"
                               variant="flat"
                               class="mr-2"
                             >
@@ -840,6 +840,21 @@ import {
 import type { EvidenceHit } from '../types/claims';
 
 type StepId = 'thesis' | 'search' | 'workspace' | 'analysis';
+
+function getStanceChipColor(stance: string): string {
+  switch (stance) {
+    case 'supports':
+      return 'green-darken-1';
+    case 'opposes':
+      return 'red-darken-1';
+    case 'mixed':
+      return 'amber-darken-1';
+    case 'irrelevant':
+      return 'blue-grey-darken-1';
+    default:
+      return 'gray';
+  }
+}
 
 const thesis = ref('');
 const claimsInput = ref('');

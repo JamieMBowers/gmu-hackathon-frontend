@@ -1,4 +1,4 @@
-const DEFAULT_API_BASE = 'http://localhost:7071/api';
+const DEFAULT_API_BASE = '/api';
 
 export function getApiBase(): string {
   const raw = (import.meta as any).env?.VITE_API_BASE_URL as string | undefined;
