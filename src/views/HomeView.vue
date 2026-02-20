@@ -1677,6 +1677,10 @@ async function onAnalyzeClaims(): Promise<void> {
 
     claimAnalysis.value = response;
 
+    if (response.meta?.debug) {
+      console.info('Claims Analysis Debug:', response.meta.debug);
+    }
+
     // Move to the Analysis step after a successful response
     activeStep.value = 'analysis';
   } catch (error) {
