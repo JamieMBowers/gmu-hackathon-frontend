@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
+deploy-swa.zip
 
 # Vite / Vue
 .vite
