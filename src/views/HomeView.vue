@@ -855,12 +855,14 @@ function normalizeStanceKey(stance: string): string {
 
 function getStanceChipColor(stance: string): string {
   const normalized = normalizeStanceKey(stance);
+  console.debug('[getStanceChipColor] raw:', stance, 'normalized:', normalized);
   switch (normalized) {
     case 'supports':
       return 'green-darken-1';
     case 'opposes':
       return 'red-darken-1';
     case 'mixed':
+      console.debug('[getStanceChipColor] returning amber for mixed');
       return 'amber-darken-1';
     case 'irrelevant':
       return 'blue-grey-darken-1';
