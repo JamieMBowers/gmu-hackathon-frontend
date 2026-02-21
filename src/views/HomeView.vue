@@ -836,6 +836,7 @@
 import { computed, ref } from 'vue';
 import ThesisInput from '../components/ThesisInput.vue';
 import EnrichedTable from '../components/EnrichedTable.vue';
+import { getStanceChipColor, normalizeStanceKey } from '../lib/stance';
 import {
   enrichSources,
   type ParsedSource,
@@ -848,28 +849,6 @@ import {
 import type { EvidenceHit } from '../types/claims';
 
 type StepId = 'thesis' | 'search' | 'workspace' | 'analysis';
-
-function normalizeStanceKey(stance: string): string {
-  return stance.trim().toLowerCase();
-}
-
-function getStanceChipColor(stance: string): string {
-  const normalized = normalizeStanceKey(stance);
-  console.debug('[getStanceChipColor] raw:', stance, 'normalized:', normalized);
-  switch (normalized) {
-    case 'supports':
-      return 'green-darken-1';
-    case 'opposes':
-      return 'red-darken-1';
-    case 'mixed':
-      console.debug('[getStanceChipColor] returning amber for mixed');
-      return 'amber-darken-1';
-    case 'irrelevant':
-      return 'blue-grey-darken-1';
-    default:
-      return 'gray';
-  }
-}
 
 const thesis = ref('');
 const claimsInput = ref('');
