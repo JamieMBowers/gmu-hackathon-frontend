@@ -570,8 +570,10 @@
                       >
                         <v-card
                           variant="outlined"
-                          class="h-100 gmu-article-card"
-                          :class="`gmu-article-card--${hit.stance}`"
+                          :class="[
+                            'h-100 gmu-article-card',
+                            `gmu-article-card--${normalizeStanceKey(hit.stance)}`,
+                          ]"
                         >
                           <v-card-text>
                             <div
@@ -600,7 +602,10 @@
                                   size="x-small"
                                   :color="getStanceChipColor(hit.stance)"
                                   variant="flat"
-                                  class="mr-2"
+                                  :class="[
+                                    'mr-2 gmu-stance-chip',
+                                    `gmu-stance-chip--${normalizeStanceKey(hit.stance)}`,
+                                  ]"
                                 >
                                   {{ hit.stance }}
                                 </v-chip>
@@ -674,7 +679,7 @@
                       variant="outlined"
                       :class="[
                         'gmu-article-card',
-                        `gmu-article-card--${claimResult.top_counter[0]!.stance}`,
+                        `gmu-article-card--${normalizeStanceKey(claimResult.top_counter[0]!.stance)}`,
                       ]"
                     >
                       <v-card-text>
@@ -708,7 +713,10 @@
                               size="x-small"
                               :color="getStanceChipColor(claimResult.top_counter[0]!.stance)"
                               variant="flat"
-                              class="mr-2"
+                              :class="[
+                                'mr-2 gmu-stance-chip',
+                                `gmu-stance-chip--${normalizeStanceKey(claimResult.top_counter[0]!.stance)}`,
+                              ]"
                             >
                               {{ claimResult.top_counter[0]!.stance }}
                             </v-chip>
@@ -841,8 +849,12 @@ import type { EvidenceHit } from '../types/claims';
 
 type StepId = 'thesis' | 'search' | 'workspace' | 'analysis';
 
+function normalizeStanceKey(stance: string): string {
+  return stance.trim().toLowerCase();
+}
+
 function getStanceChipColor(stance: string): string {
-  const normalized = stance.trim().toLowerCase();
+  const normalized = normalizeStanceKey(stance);
   switch (normalized) {
     case 'supports':
       return 'green-darken-1';
@@ -1680,6 +1692,14 @@ async function onAnalyzeClaims(): Promise<void> {
 
     if (response.meta?.debug) {
       console.info('Claims Analysis Debug:', response.meta.debug);
+      const stanceCounts = response.results
+        .flatMap((result) => [...result.top_supporting, ...result.top_counter])
+        .reduce<Record<string, number>>((acc, hit) => {
+          const key = hit.stance.trim().toLowerCase();
+          acc[key] = (acc[key] ?? 0) + 1;
+          return acc;
+        }, {});
+      console.info('Claims Analysis Stance Counts:', stanceCounts);
     }
 
     // Move to the Analysis step after a successful response

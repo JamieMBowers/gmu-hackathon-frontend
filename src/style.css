@@ -260,6 +260,11 @@ body {
   gap: 0.25rem;
 }
 
+.gmu-stance-chip--mixed {
+  background-color: #f59e0b !important;
+  color: #111827 !important;
+}
+
 .gmu-claim-title-row {
   font-size: 1rem;
   font-weight: 600;
