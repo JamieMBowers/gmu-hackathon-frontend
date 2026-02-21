@@ -842,7 +842,8 @@ import type { EvidenceHit } from '../types/claims';
 type StepId = 'thesis' | 'search' | 'workspace' | 'analysis';
 
 function getStanceChipColor(stance: string): string {
-  switch (stance) {
+  const normalized = stance.trim().toLowerCase();
+  switch (normalized) {
     case 'supports':
       return 'green-darken-1';
     case 'opposes':
