@@ -61,6 +61,7 @@ export interface ClaimAnalyzeResponse {
         temperature: string;
         top_p: string;
         seed: string;
+        max_tokens: string;
       };
       heuristic_fallback_count: number;
     };
