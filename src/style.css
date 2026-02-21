@@ -265,6 +265,10 @@ body {
   color: #111827 !important;
 }
 
+.gmu-stance-chip--mixed .v-chip__underlay {
+  background-color: #f59e0b !important;
+}
+
 .gmu-claim-title-row {
   font-size: 1rem;
   font-weight: 600;
